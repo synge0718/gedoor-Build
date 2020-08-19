@@ -2,7 +2,7 @@
 
 > 默认从最新发布的tag构建,每次构建会自动清空18PlusList.txt
 
-> 当前最新tag:3.20.080221 上次检查时间:2020-08-04 11:07:44
+> 当前最新tag:3.20.081608 上次检查时间:2020-08-19 11:14:58
   
 1. fork到你自己的仓库
 2. 去你自己的仓库,点一下右上角star就会自动开始构建,已经star的点unstar,再点一下star就会进行新的构建,你的[Actions](https://github.com/10bits/gedoor-Build/actions)列表会有显示的
@@ -19,7 +19,7 @@
 > 使用app过程中遇到问题,请到这里解决[gedoor/legado](https://github.com/gedoor/legado/issues)
 ## 如何定制你自己的APP(举例)
 请在`action_app_custom.sh`脚本里进行定制
-> 现在只有仓库的拥有者才能运行此脚本
+
 ```bash
 #!/bin/sh
 #设置搜索界面浮动按钮颜色
@@ -29,14 +29,24 @@ sed '/minifyEnabled/i\            shrinkResources true' /opt/legado/app/build.gr
 sed 's/minifyEnabled false/minifyEnabled true/'         /opt/legado/app/build.gradle -i
 ```
 ## 构建任务过程中用到的脚本
-> 环境变量`$workspace`是clone项目工作目录,`$name`是你app的名字,`$tag`是clone项目最新tag
-* `action_clone.sh`脚本用来clone远端仓库到`$workspace`
-* `action_check_tag.sh`脚本用来获取远端仓库最新tag
-* `action_app_sign.sh`脚本用来给app进行签名
-* `action_app_custom.sh`脚本用来个性化定制app
-* `action_app_together.sh`脚本用来解决安装程序共存
-* `action_schedule.sh`脚本用来定时更新本页面里`当前最新tag`的显示
-## 免责声明
+* `action_setenv.sh`用来设置环境变量
+* `action_clone.sh`用来clone远端仓库
+* `action_app_custom.sh`用来定制app
+> 脚本中用的的环境变量
 
+|环境变量名      |描述|
+|--|--|
+|APP_NAME       |构建app的名字|
+|APP_GIT_URL    |构建app的git url|
+|APP_WORKSPACE  |构建app的工作目录|
+|APP_UPLOAD_NAME|构建完打包名|
+|APP_UPLOAD     |构建完apk打包路径|
+## 编译其他开源APP(MyBookshelf阅读2.0)
+> 修改`action_setenv.sh`脚本里的坏境变量`APP_NAME`,`APP_GIT_URL`
+```bash
+APP_NAME='MyBookshelf'
+APP_GIT_URL='https://github.com/gedoor/MyBookshelf.git'
+```
+## 免责声明
 * 使用github actions自动构建,不会对原仓库代码程序进行任何修改
 * 如果你使用了自动打包的apk对你的设备产生伤害,与本人无关,一切都是自动构建的
