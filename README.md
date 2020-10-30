@@ -9,7 +9,6 @@
 3. 每次构建完,apk会自动打包为`legado.apk.zip
 `,去你自己的[Actions](https://github.com/10bits/gedoor-Build/actions)列表里找
 4. 每次构建大概十几分钟,请耐心等待
-5. 为什么要去自己的仓库构建,因为很多人一起构建,Actions列表会显的乱七八糟
 
 ## 如果你安装apk遇到以下问题
 
@@ -41,6 +40,20 @@ sed 's/minifyEnabled false/minifyEnabled true/'         /opt/legado/app/build.gr
 |APP_WORKSPACE  |构建app的工作目录|
 |APP_UPLOAD_NAME|构建完打包名|
 |APP_UPLOAD     |构建完apk打包路径|
+
+> SECRETS环境变量
+
+|环境变量名      |描述|
+|--|--|
+|APP_NAME       |构建其他仓库app的名字|
+|GIT_URL        |构建其他仓库app的git url|
+|ENABLE         |是否开启构建其他仓库|
+|MINIFY         |是否启用压缩apk体积|
+|RENAME         |是否更改桌面启动名称|
+|SUFFIX         |后缀名|
+
+<img src="https://i.loli.net/2020/10/21/7LqornKzC2hmsUd.png" width = "50%" height = "50%" alt="" align=center />
+
 ## 编译其他开源APP(MyBookshelf阅读2.0)
 > 修改`action_setenv.sh`脚本里的坏境变量`APP_NAME`,`APP_GIT_URL`
 ```bash
