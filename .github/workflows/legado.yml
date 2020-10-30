@@ -4,7 +4,7 @@ on:
   watch:
     types: [started]
   schedule:
-    - cron: '0 3 * * *'
+    - cron: '0 */6 * * *'
 
 jobs:
   schedule:
@@ -16,16 +16,64 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -y install git
-    - name: set env
-      shell: bash
-      run: source $GITHUB_WORKSPACE/action_setenv.sh
-    - name: clone code
-      shell: bash
-      run: source $GITHUB_WORKSPACE/action_clone.sh
+          
     - name: check latest tag
       shell: bash
+      env:
+        SECRETS_MINIFY: ${{ secrets.MINIFY }}
+        SECRETS_RENAME: ${{ secrets.RENAME }}
       run: source $GITHUB_WORKSPACE/action_schedule.sh
-
+    
+    - name: check if release
+      id: check_release
+      shell: bash
+      run: |
+        function version_gt() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1"; }
+        if version_gt $APP_LATEST_TAG $APP_LAST_TAG; then
+          echo ::set-output name=if_release::true
+        fi
+        
+    - name: build apk
+      id: build_apk
+      if: steps.check_release.outputs.if_release == 'true'
+      shell: bash
+      run: |
+        source $GITHUB_WORKSPACE/action_app_custom.sh
+        app_build
+        cd $GITHUB_WORKSPACE
+        if [ -d $APP_UPLOAD ]; then
+          if [ $(find $APP_UPLOAD -name "*.apk"|wc -l) == 1 ]; then
+            zip --junk-paths $APP_UPLOAD_NAME.zip $APP_UPLOAD/*.apk
+            echo ::set-output name=if_publish::true
+            set_env APP_RELEASE_NAME $APP_UPLOAD_NAME.zip
+            set_env APP_RELEASE $GITHUB_WORKSPACE/$APP_UPLOAD_NAME.zip
+          fi
+        fi
+        
+    - name: create release
+      id: create_release
+      if: steps.build_apk.outputs.if_publish == 'true'
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ env.APP_UPLOAD_NAME }}
+        release_name: ${{ env.APP_UPLOAD_NAME }}
+        draft: false
+        prerelease: false
+    
+    - name: upload release asset
+      id: upload-release-asset 
+      if: steps.build_apk.outputs.if_publish == 'true'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: ${{ env.APP_RELEASE }}
+        asset_name: ${{ env.APP_RELEASE_NAME }}
+        asset_content_type: application/zip
+  
   build:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
@@ -46,9 +94,12 @@ jobs:
       env:
         SECRETS_APP_NAME: ${{ secrets.APP_NAME }}
         SECRETS_GIT_URL: ${{ secrets.GIT_URL }}
-        SECRETS_GIT_TAG: ${{ secrets.GIT_TAG }}
+        SECRETS_SUFFIX: ${{ secrets.SUFFIX }}
         SECRETS_ENABLE: ${{ secrets.ENABLE }}
         SECRETS_MINIFY: ${{ secrets.MINIFY }}
+        SECRETS_RENAME: ${{ secrets.RENAME }}
+        REPO_OWNER: ${{ github.repository_owner }}
+        REPO_ACTOR: ${{ github.actor }}
         SECRETS_TAG: ${{ secrets.TAG }}
       run: source $GITHUB_WORKSPACE/action_setenv.sh
       
@@ -58,7 +109,9 @@ jobs:
 
     - name: custom your app and build
       shell: bash
-      run: source $GITHUB_WORKSPACE/action_app_custom.sh
+      run: |
+        source $GITHUB_WORKSPACE/action_app_custom.sh
+        app_build
 
     - name : upload apk
       uses: actions/upload-artifact@master
