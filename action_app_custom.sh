@@ -19,7 +19,18 @@ function app_rename()
         #更改桌面启动名称
         sed 's/"app_name">阅读/"app_name">'"$APP_LAUNCH_NAME"'/' $APP_WORKSPACE/app/src/main/res/values-zh/strings.xml -i
         #更改webdav备份目录legado为legado+后缀名
-        sed "s/legado\//legado$APP_SUFFIX\//"                    $APP_WORKSPACE/app/src/main/java/io/legado/app/help/storage/WebDavHelp.kt -i
+        sed "s/legado\//legado$APP_SUFFIX\//"                    $APP_WORKSPACE/app/src/main/java/io/legado/app/help/storage/BookWebDav.kt -i
+    fi
+}
+
+#满足本人的一些小优化
+function app_bugme()
+{
+    if [ $APP_NAME = 'legado' ] && [[ $REPO_ACTOR = '10bits' ]]; then
+        echo "bugme个人优化 for 10bits"
+        sed "/error(it)/i\isLoading = false"        $APP_WORKSPACE/app/src/main/java/io/legado/app/ui/book/explore/ExploreShowActivity.kt -i
+        sed 's/error(it)/error("网络请求失败或超时")/' $APP_WORKSPACE/app/src/main/java/io/legado/app/ui/book/explore/ExploreShowActivity.kt -i
+        sed "s/30000L/6000L/"                       $APP_WORKSPACE/app/src/main/java/io/legado/app/ui/book/explore/ExploreShowViewModel.kt -i
     fi
 }
 
@@ -113,4 +124,4 @@ if [ $SECRETS_MINIFY = 'true' ]; then
 fi
 
 #准备工作在这里,可以删除你不需要的
-app_clear_18plus;app_rename;app_sign;app_live_together;app_not_apply_plugin
+app_bugme;app_clear_18plus;app_rename;app_sign;app_live_together;app_not_apply_plugin
